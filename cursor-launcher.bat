@@ -16,7 +16,6 @@ echo =================================================
 echo           CURSOR PROFILE LAUNCHER
 echo =================================================
 echo.
-:: List dynamic profiles if folder exists
 set "profiles_dir=%USERPROFILE%\Cursor\Profiles"
 if exist "%profiles_dir%" (
     echo Available profiles:
@@ -24,12 +23,12 @@ if exist "%profiles_dir%" (
     echo.
 )
 echo [1] Launch Default profile
-    echo [2] Launch Profile 2
-    echo [3] Launch Profile 3
-    echo [4] Launch Profile 4
-    echo [5] Launch Custom profile
-    echo [H] Help
-    echo [6] Exit
+echo [2] Launch Profile 2
+echo [3] Launch Profile 3
+echo [4] Launch Profile 4
+echo [5] Launch Custom profile
+echo [H] Help
+echo [6] Exit
 echo.
 set /p "menu_choice=Enter your choice (1-6, H for help): "
 if /i "%menu_choice%"=="h" goto HELP
@@ -67,7 +66,9 @@ if defined project_dir if not exist "%project_dir%" (
     echo ERROR: Project directory not found.& pause & goto MAIN_MENU
 )
 set /p "memory_limit=Enter memory limit in MB (default: 16384): "
-if "%memory_limit%"=="" (set "memory_limit=16384") else (
+if "%memory_limit%"=="" (
+    set "memory_limit=16384"
+) else (
     for /f "delims=0123456789" %%A in ("%memory_limit%") do (
         echo ERROR: Memory limit must be a number.& pause & goto MAIN_MENU
     )
@@ -75,20 +76,25 @@ if "%memory_limit%"=="" (set "memory_limit=16384") else (
 
 set "profile_arg=--user-data-dir %profile_dir%"
 set "memory_arg=--max-memory=%memory_limit%"
-if defined project_dir (set "project_arg=--reuse-window "%project_dir%"") else set "project_arg="
+if defined project_dir (
+    set "project_arg=--reuse-window "%project_dir%""
+) else set "project_arg="
 
 set "log_file=%TEMP%\cursor_%profile_dir%_%date:~0,2%-%date:~3,2%-%date:~6,4%.log"
 set "launch_script=%TEMP%\cursor_launcher_%RANDOM%.bat"
 
-(echo @echo off
-echo Title: Cursor - Profile: %profile_dir%
-echo Launching Cursor with profile: %profile_dir%
-echo Memory limit: %memory_limit% MB
-echo Project directory: %project_dir%
-echo Logging to: %log_file%
-echo.
-echo start /wait "" "%cursor_path%" %profile_arg% %memory_arg% %project_arg% >> "%log_file%" 2>&1
-echo del "%%~f0"
+(
+    echo @echo off
+    echo title Cursor - Profile: %profile_dir%
+    echo echo Launching Cursor with profile: %profile_dir%
+    echo echo Memory limit: %memory_limit% MB
+    echo echo Project directory: %project_dir%
+    echo echo Logging to: %log_file%
+    echo.
+    echo start /wait "" "%cursor_path%" %profile_arg% %memory_arg% %project_arg% ^>^> "%log_file%" 2^>^&1
+    echo echo Cursor has been closed.
+    echo timeout /t 3 ^> nul
+    echo del "%%~f0"
 ) > "%launch_script%"
 
 start "Cursor - %profile_dir%" cmd /k "%launch_script%"
